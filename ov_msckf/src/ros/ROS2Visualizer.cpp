@@ -73,6 +73,7 @@ ROS2Visualizer::ROS2Visualizer(std::shared_ptr<rclcpp::Node> node, std::shared_p
   PRINT_DEBUG("Publishing: %s\n", pub_pathgt->get_topic_name());
 
   // Loop closure publishers
+  pub_vision = node->create_publisher<geometry_msgs::msg::PoseStamped>("/mavros/vision_pose/pose", 2);
   pub_loop_pose = node->create_publisher<nav_msgs::msg::Odometry>("loop_pose", 2);
   pub_loop_point = node->create_publisher<sensor_msgs::msg::PointCloud>("loop_feats", 2);
   pub_loop_extrinsic = node->create_publisher<nav_msgs::msg::Odometry>("loop_extrinsic", 2);
@@ -641,6 +642,28 @@ void ROS2Visualizer::publish_state() {
     arrIMU.poses.push_back(poses_imu.at(i));
   }
   pub_pathimu->publish(arrIMU);
+
+    // Publish vision pose
+  geometry_msgs::msg::PoseStamped posevio;
+  posevio.header.stamp = ROSVisualizerHelper::get_time_from_seconds(timestamp_inI);
+  posevio.header.frame_id = "world";
+  Eigen::Quaterniond q_orig(
+    state->_imu->quat()(3),
+    state->_imu->quat()(0),
+    state->_imu->quat()(1),
+    state->_imu->quat()(2)
+  );
+  Eigen::Quaterniond q_rot180(0, 0, 0, 1); // (w, x, y, z)
+  Eigen::Quaterniond q_new = q_rot180 * q_orig;
+  q_new.normalize();
+  posevio.pose.orientation.x = q_new.x();
+  posevio.pose.orientation.y = q_new.y();
+  posevio.pose.orientation.z = q_new.z();
+  posevio.pose.orientation.w = q_new.w();
+  posevio.pose.position.x = -state->_imu->pos()(0);
+  posevio.pose.position.y = -state->_imu->pos()(1);
+  posevio.pose.position.z = state->_imu->pos()(2);
+  pub_vision->publish(posevio);
 }
 
 void ROS2Visualizer::publish_images() {

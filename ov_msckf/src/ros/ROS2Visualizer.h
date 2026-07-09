@@ -167,7 +167,7 @@ protected:
 
   // Groundtruth infomation
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_pathgt;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_posegt;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_posegt, pub_vision;
   double summed_mse_ori = 0.0;
   double summed_mse_pos = 0.0;
   double summed_nees_ori = 0.0;
